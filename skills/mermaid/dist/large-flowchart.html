@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Large Order-Fulfillment Flowchart</title>
+    <style>
+      :root {
+        --bg-body: #0d1117;
+        --text-body: #e6edf3;
+        --border: #30363d;
+        --bg-surface: #21262d;
+        --bg-surface-hover: #30363d;
+        --text-muted: #8b949e;
+
+        color-scheme: dark;
+      }
+
+      [data-theme="light"] {
+        --bg-body: #ffffff;
+        --text-body: #1f2328;
+        --border: #d0d7de;
+        --bg-surface: #f6f8fa;
+        --bg-surface-hover: #eff2f5;
+        --text-muted: #656d76;
+
+        color-scheme: light;
+      }
+
+      :root {
+        --border-radius-sm: 0.25rem;
+        --border-radius-md: 0.5rem;
+        --border-radius-lg: 0.75rem;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        box-sizing: border-box;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        background: var(--bg-body);
+        color: var(--text-body);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+      .diagram-box {
+        width: 100%;
+        height: 70vh;
+        border: 1px solid var(--border);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        position: relative;
+        cursor: grab;
+        touch-action: none;
+      }
+      .diagram-box.dragging {
+        cursor: grabbing;
+      }
+      .mermaid {
+        margin: 0;
+        height: 100%;
+      }
+      .mermaid svg {
+        display: block;
+      }
+      .description {
+        max-width: 65ch;
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 1.0rem;
+        line-height: 1.5;
+        text-align: center;
+      }
+      .toolbar {
+        border: 1px solid var(--border);
+        border-radius: var(--border-radius-md);
+        background: var(--bg-surface);
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        overflow: hidden;
+        z-index: 100;
+      }
+      .toolbar button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        padding: 0;
+        border-radius: var(--border-radius-md);
+        background: var(--bg-surface);
+        color: var(--text-body);
+        border: none;
+        cursor: pointer;
+      }
+      .toolbar button:hover {
+        background: var(--bg-surface-hover);
+      }
+      .toolbar button svg {
+        width: 20px;
+        height: 20px;
+      }
+      .diagram-title{
+        font-size: 2rem;
+      }
+      #raw-mermaid{
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    
+    <h1>Large Order-Fulfillment Flowchart</h1>
+    <div class="diagram-box">
+      <div id="raw-mermaid">
+flowchart LR
+    A[Customer places order] --> B{Order valid?}
+    B -->|No| C[Show validation error]
+    B -->|Yes| D[Reserve payment]
+    D --> E{Payment authorized?}
+    E -->|No| F[Notify payment failure]
+    E -->|Yes| G[Create order record]
+    G --> H[Check inventory]
+    H --> I{In stock?}
+    I -->|No| J{Backorder or cancel}
+    J -->|Backorder| K[Place supplier order]
+    J -->|Cancel| L[Refund payment]
+    I -->|Yes| M[Pick items]
+    M --> N[Pack shipment]
+    N --> O[Print label]
+    O --> P{Shipping method}
+    P -->|Standard| Q[Hand to carrier standard]
+    P -->|Express| R[Hand to carrier express]
+    Q --> S[Send tracking email]
+    R --> S
+    S --> T[Update status shipped]
+    T --> U{Delivery outcome}
+    U -->|Delivered| V[Mark delivered]
+    U -->|Failed| W[Schedule retry]
+    U -->|Returned| X[Inspect return]
+    V --> Y[Request review]
+    Y --> Z{Review received}
+    Z -->|Yes| AA[Publish review]
+    Z -->|No| AB[Send reminder]
+    AB --> Z
+    K --> AC[Receive supplier stock]
+    AC --> M
+    X --> AD{Item condition}
+    AD -->|Good| AE[Restock and refund]
+    AD -->|Damaged| AF[Dispose and partial refund]
+    L --> AG[Order cancelled email]
+    F --> AG
+    W --> AH{Retry limit}
+    AH -->|Under limit| AI[Reattempt delivery]
+    AH -->|Exceeded| AJ[Refund and cancel]
+    AI --> U
+    AJ --> AG
+    AE --> AG
+    AF --> AG
+    AA --> AK[Product analytics]
+
+      </div>
+<div class="toolbar">
+      <button id="theme-toggle" aria-label="Switch to light mode" title="Switch to light mode">
+        <svg id="theme-icon-dark" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg id="theme-icon-light" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+      <button id="zoom-in" aria-label="Zoom in" title="Zoom in">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          <line x1="11" y1="8" x2="11" y2="14"></line>
+          <line x1="8" y1="11" x2="14" y2="11"></line>
+        </svg>
+      </button>
+      <button id="zoom-out" aria-label="Zoom out" title="Zoom out">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          <line x1="8" y1="11" x2="14" y2="11"></line>
+        </svg>
+      </button>
+      <button id="zoom-reset" aria-label="Reset zoom" title="Fit to view">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <polyline points="9 21 3 21 3 15"></polyline>
+          <polyline points="21 15 21 21 15 21"></polyline>
+          <polyline points="3 9 3 3 9 3"></polyline>
+        </svg>
+      </button>
+      <button id="copy" aria-label="Copy mermaid source" title="Copy source">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+    </div>
+      <pre class="mermaid"></pre>
+    </div>
+    <p class="description">A wide order-fulfillment flowchart spanning validation, payment, inventory, shipping, delivery, retries, returns, and reviews. It intentionally exceeds a typical viewport width so you can test the zoom controls and horizontal scrolling.</p>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      /**
+       * Application-wide constants and DOM selectors.
+       * Keeping them in one place makes the rest of the file easier to read and tweak.
+       */
+      const CONFIG = {
+        STORAGE_KEY: "mermaid-theme",
+        THEMES: ["dark", "light"],
+        SELECTORS: {
+          rawMermaid: "#raw-mermaid",
+          mermaidOutput: ".mermaid",
+          diagramBox: ".diagram-box",
+          themeToggle: "#theme-toggle",
+          themeIconDark: "#theme-icon-dark",
+          themeIconLight: "#theme-icon-light",
+          zoomIn: "#zoom-in",
+          zoomOut: "#zoom-out",
+          zoomReset: "#zoom-reset",
+          copyButton: "#copy",
+        },
+        ZOOM_WHEEL_FACTOR: 0.001,
+        ZOOM_STEP: 1.25,
+        MIN_ZOOM_RATIO: 0.25,
+        MAX_ZOOM_RATIO: 8,
+      };
+
+      /**
+       * Manages the UI theme (dark/light): detection, persistence, toggle UI, and
+       * the mapping to Mermaid's own theme names.
+       */
+      class ThemeManager {
+        /**
+         * @param {string} storageKey
+         * @param {string[]} validThemes
+         */
+        constructor(storageKey, validThemes) {
+          this.storageKey = storageKey;
+          this.validThemes = validThemes;
+          this.toggleButton = document.querySelector(CONFIG.SELECTORS.themeToggle);
+          this.darkIcon = document.querySelector(CONFIG.SELECTORS.themeIconDark);
+          this.lightIcon = document.querySelector(CONFIG.SELECTORS.themeIconLight);
+        }
+
+        /**
+         * Returns the user's preferred theme, falling back to the OS preference.
+         * @returns {string}
+         */
+        getInitialTheme() {
+          const saved = localStorage.getItem(this.storageKey);
+          if (saved && this.validThemes.includes(saved)) return saved;
+
+          const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+          return prefersLight ? "light" : "dark";
+        }
+
+        /**
+         * Returns the theme currently applied to the document.
+         * @returns {string}
+         */
+        getCurrentTheme() {
+          return document.documentElement.dataset.theme || "dark";
+        }
+
+        /**
+         * Returns the other theme, used for toggle labels.
+         * @param {string} theme
+         * @returns {string}
+         */
+        getNextTheme(theme) {
+          return theme === "dark" ? "light" : "dark";
+        }
+
+        /**
+         * Maps our UI theme name to the equivalent Mermaid theme name.
+         * @param {string} theme
+         * @returns {string}
+         */
+        getMermaidTheme(theme) {
+          return theme === "dark" ? "dark" : "light";
+        }
+
+        /**
+         * Applies the theme to the document root and persists it.
+         * @param {string} theme
+         */
+        applyTheme(theme) {
+          document.documentElement.dataset.theme = theme;
+          localStorage.setItem(this.storageKey, theme);
+        }
+
+        /**
+         * Updates the toggle button's accessible label, tooltip, and visible icon.
+         * @param {string} theme
+         */
+        updateToggleUI(theme) {
+          const next = this.getNextTheme(theme);
+          const label = `Switch to ${next} mode`;
+
+          this.toggleButton.setAttribute("aria-label", label);
+          this.toggleButton.setAttribute("title", label);
+          this.darkIcon.style.display = theme === "dark" ? "block" : "none";
+          this.lightIcon.style.display = theme === "light" ? "block" : "none";
+        }
+      }
+
+      /**
+       * Handles Mermaid initialization and diagram rendering from the hidden
+       * source block into the visible output element.
+       */
+      class DiagramRenderer {
+        /**
+         * @param {HTMLElement} sourceElement
+         * @param {HTMLElement} outputElement
+         */
+        constructor(sourceElement, outputElement) {
+          this.sourceElement = sourceElement;
+          this.outputElement = outputElement;
+        }
+
+        /**
+         * Returns the raw Mermaid source text.
+         * @returns {string}
+         */
+        getSource() {
+          return this.sourceElement.textContent;
+        }
+
+        /**
+         * Initializes Mermaid with the theme for the next render.
+         * @param {string} mermaidTheme
+         */
+        initializeMermaid(mermaidTheme) {
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: mermaidTheme,
+            useMaxWidth: false,
+          });
+        }
+
+        /**
+         * Renders the diagram with the given Mermaid theme and returns the generated SVG.
+         * We remove `data-processed` because Mermaid skips elements that were already rendered.
+         * @param {string} mermaidTheme
+         * @returns {Promise<SVGSVGElement|null>}
+         */
+        async render(mermaidTheme) {
+          this.initializeMermaid(mermaidTheme);
+
+          this.outputElement.textContent = this.getSource();
+          this.outputElement.removeAttribute("data-processed");
+
+          await mermaid.run({ nodes: [this.outputElement] });
+          return this.outputElement.querySelector("svg");
+        }
+      }
+
+      /**
+       * Encapsulates all pan/zoom behavior: wrapping the SVG, tracking scale and
+       * translation, handling wheel zoom, pointer drag, and fit-to-view.
+       */
+      class PanZoomController {
+        /**
+         * @param {HTMLElement} outputElement
+         * @param {HTMLElement} viewportElement
+         */
+        constructor(outputElement, viewportElement) {
+          this.outputElement = outputElement;
+          this.viewportElement = viewportElement;
+
+          this.panZoomContainer = document.createElement("div");
+          this.panZoomContainer.className = "pan-zoom-container";
+          this.panZoomContainer.style.transformOrigin = "0 0";
+
+          this.svg = null;
+          this.naturalWidth = 0;
+          this.naturalHeight = 0;
+          this.fitScale = 1;
+          this.currentScale = 1;
+          this.translateX = 0;
+          this.translateY = 0;
+
+          this.isDragging = false;
+          this.lastPointerX = 0;
+          this.lastPointerY = 0;
+
+          this.bindEvents();
+        }
+
+        /**
+         * Wraps the SVG in the pan-zoom container and measures its natural size.
+         * @param {SVGSVGElement} svg
+         */
+        mount(svg) {
+          this.outputElement.replaceChildren(this.panZoomContainer);
+          this.panZoomContainer.replaceChildren(svg);
+          this.svg = svg;
+
+          const { width, height } = svg.getBoundingClientRect();
+          this.naturalWidth = width;
+          this.naturalHeight = height;
+        }
+
+        /**
+         * Replaces the SVG after a theme re-render and refits it to the viewport.
+         * @param {SVGSVGElement} svg
+         */
+        replaceSvg(svg) {
+          this.mount(svg);
+          this.fitToContainer();
+        }
+
+        /**
+         * Clamps the requested scale between a minimum and maximum zoom ratio
+         * relative to the fit scale.
+         * @param {number} scale
+         * @returns {number}
+         */
+        clampScale(scale) {
+          const minScale = this.fitScale * CONFIG.MIN_ZOOM_RATIO;
+          const maxScale = this.fitScale * CONFIG.MAX_ZOOM_RATIO;
+          return Math.min(Math.max(scale, minScale), maxScale);
+        }
+
+        /**
+         * Writes the current transform to the pan-zoom container.
+         */
+        applyTransform() {
+          this.panZoomContainer.style.transform =
+            `translate(${this.translateX}px, ${this.translateY}px) scale(${this.currentScale})`;
+        }
+
+        /**
+         * Centers the diagram and scales it to fit inside the viewport.
+         */
+        fitToContainer() {
+          const viewportWidth = this.viewportElement.clientWidth;
+          const viewportHeight = this.viewportElement.clientHeight;
+
+          this.fitScale = Math.min(
+            viewportWidth / this.naturalWidth,
+            viewportHeight / this.naturalHeight,
+            1,
+          );
+          this.currentScale = this.fitScale;
+          this.translateX = (viewportWidth - this.naturalWidth * this.fitScale) / 2;
+          this.translateY = (viewportHeight - this.naturalHeight * this.fitScale) / 2;
+
+          this.applyTransform();
+        }
+
+        /**
+         * Zooms to an absolute scale, keeping the point under the cursor stable.
+         * @param {number} newScale
+         * @param {number} centerX
+         * @param {number} centerY
+         */
+        zoomTo(newScale, centerX, centerY) {
+          const previousScale = this.currentScale;
+          const clampedScale = this.clampScale(newScale);
+
+          if (clampedScale === previousScale) return;
+
+          // Adjust translation so the zoom focal point stays under the cursor.
+          this.translateX = centerX - (centerX - this.translateX) * (clampedScale / previousScale);
+          this.translateY = centerY - (centerY - this.translateY) * (clampedScale / previousScale);
+          this.currentScale = clampedScale;
+
+          this.applyTransform();
+        }
+
+        /**
+         * Zooms by a relative factor around a center point.
+         * @param {number} factor
+         * @param {number} centerX
+         * @param {number} centerY
+         */
+        zoomBy(factor, centerX, centerY) {
+          this.zoomTo(this.currentScale * factor, centerX, centerY);
+        }
+
+        /**
+         * Pans the diagram by the given delta.
+         * @param {number} deltaX
+         * @param {number} deltaY
+         */
+        panBy(deltaX, deltaY) {
+          this.translateX += deltaX;
+          this.translateY += deltaY;
+          this.applyTransform();
+        }
+
+        /**
+         * Returns true when the event started on a toolbar element, which should
+         * not initiate a drag.
+         * @param {PointerEvent} event
+         * @returns {boolean}
+         */
+        isToolbarEvent(event) {
+          return Boolean(event.target.closest(".toolbar"));
+        }
+
+        /**
+         * Starts a pointer drag unless the pointer is on the toolbar.
+         * @param {PointerEvent} event
+         */
+        onPointerDown(event) {
+          if (this.isToolbarEvent(event)) return;
+
+          this.isDragging = true;
+          this.lastPointerX = event.clientX;
+          this.lastPointerY = event.clientY;
+          this.viewportElement.classList.add("dragging");
+          this.viewportElement.setPointerCapture(event.pointerId);
+        }
+
+        /**
+         * Pans the diagram while dragging.
+         * @param {PointerEvent} event
+         */
+        onPointerMove(event) {
+          if (!this.isDragging) return;
+
+          this.panBy(event.clientX - this.lastPointerX, event.clientY - this.lastPointerY);
+          this.lastPointerX = event.clientX;
+          this.lastPointerY = event.clientY;
+        }
+
+        /**
+         * Ends the current drag gesture.
+         */
+        onPointerUp() {
+          this.isDragging = false;
+          this.viewportElement.classList.remove("dragging");
+        }
+
+        /**
+         * Zooms with the mouse wheel around the cursor position.
+         * @param {WheelEvent} event
+         */
+        onWheel(event) {
+          event.preventDefault();
+
+          const rect = this.viewportElement.getBoundingClientRect();
+          const centerX = event.clientX - rect.left;
+          const centerY = event.clientY - rect.top;
+          const zoomFactor = 1 + event.deltaY * -CONFIG.ZOOM_WHEEL_FACTOR;
+
+          this.zoomBy(zoomFactor, centerX, centerY);
+        }
+
+        /**
+         * Wires up pointer, wheel, and resize events.
+         */
+        bindEvents() {
+          this.viewportElement.addEventListener("pointerdown", (event) => this.onPointerDown(event));
+          this.viewportElement.addEventListener("pointermove", (event) => this.onPointerMove(event));
+          this.viewportElement.addEventListener("pointerup", () => this.onPointerUp());
+          this.viewportElement.addEventListener("pointerleave", () => this.onPointerUp());
+          this.viewportElement.addEventListener("wheel", (event) => this.onWheel(event), {
+            passive: false,
+          });
+          window.addEventListener("resize", () => this.fitToContainer());
+        }
+      }
+
+      /**
+       * Wires toolbar buttons to the controllers.
+       * @param {ThemeManager} themeManager
+       * @param {DiagramRenderer} diagramRenderer
+       * @param {PanZoomController} panZoomController
+       */
+      function setupToolbar(themeManager, diagramRenderer, panZoomController) {
+        const viewportElement = panZoomController.viewportElement;
+
+        document.querySelector(CONFIG.SELECTORS.themeToggle).addEventListener("click", async () => {
+          const nextTheme = themeManager.getNextTheme(themeManager.getCurrentTheme());
+
+          themeManager.applyTheme(nextTheme);
+          const newSvg = await diagramRenderer.render(themeManager.getMermaidTheme(nextTheme));
+          themeManager.updateToggleUI(nextTheme);
+
+          if (newSvg) {
+            panZoomController.replaceSvg(newSvg);
+          }
+        });
+
+        document.querySelector(CONFIG.SELECTORS.zoomIn).addEventListener("click", () => {
+          const rect = viewportElement.getBoundingClientRect();
+          panZoomController.zoomBy(CONFIG.ZOOM_STEP, rect.width / 2, rect.height / 2);
+        });
+
+        document.querySelector(CONFIG.SELECTORS.zoomOut).addEventListener("click", () => {
+          const rect = viewportElement.getBoundingClientRect();
+          panZoomController.zoomBy(1 / CONFIG.ZOOM_STEP, rect.width / 2, rect.height / 2);
+        });
+
+        document.querySelector(CONFIG.SELECTORS.zoomReset).addEventListener("click", () => {
+          panZoomController.fitToContainer();
+        });
+
+        document.querySelector(CONFIG.SELECTORS.copyButton).addEventListener("click", () => {
+          navigator.clipboard.writeText(diagramRenderer.getSource());
+        });
+      }
+
+      /**
+       * Bootstraps the app: pick theme, render diagram, init pan/zoom, bind UI.
+       */
+      async function main() {
+        const themeManager = new ThemeManager(CONFIG.STORAGE_KEY, CONFIG.THEMES);
+        const initialTheme = themeManager.getInitialTheme();
+
+        const sourceElement = document.querySelector(CONFIG.SELECTORS.rawMermaid);
+        const outputElement = document.querySelector(CONFIG.SELECTORS.mermaidOutput);
+        const diagramBox = document.querySelector(CONFIG.SELECTORS.diagramBox);
+
+        const diagramRenderer = new DiagramRenderer(sourceElement, outputElement);
+
+        themeManager.applyTheme(initialTheme);
+        const initialSvg = await diagramRenderer.render(themeManager.getMermaidTheme(initialTheme));
+        themeManager.updateToggleUI(initialTheme);
+
+        if (!initialSvg || !diagramBox) return;
+
+        const panZoomController = new PanZoomController(outputElement, diagramBox);
+        panZoomController.mount(initialSvg);
+        panZoomController.fitToContainer();
+
+        setupToolbar(themeManager, diagramRenderer, panZoomController);
+      }
+
+      main().catch((error) => console.error("Failed to initialize diagram page:", error));
+    </script>
+  </body>
+</html>
