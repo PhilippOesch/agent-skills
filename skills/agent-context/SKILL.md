@@ -12,7 +12,7 @@ Done when the correct file exists in `<agentContextPath>/<folder>/` with valid f
 ## Steps
 
 1. **Read config**
-   - Path: `~/.pi/agent/pi-mp-my-agent.json`.
+   - Path: `~/.config/agent-context-config.json`.
    - Read `knowledge.agentContextPath` and `knowledge.folders`.
 
 2. **Choose folder**
